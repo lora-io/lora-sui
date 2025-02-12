@@ -1,0 +1,35 @@
+{
+  "name": "@repo/db",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "dev": "tsc -w",
+    "lint": "eslint \"src/**/*.ts\" --max-warnings 0",
+    "db:dev": "prisma migrate dev",
+    "db:dev:create": "prisma migrate dev --create-only",
+    "db:deploy": "prisma migrate deploy",
+    "db:push": "prisma db push",
+    "format": "prisma format",
+    "generate": "prisma generate",
+    "prebuild": "npm run generate",
+    "predev": "npm run generate",
+    "studio": "prisma studio",
+    "postinstall": "npm run generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.20.0"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^20",
+    "prisma": "^5.20.0",
+    "typescript": "5.5.4"
+  }
+}

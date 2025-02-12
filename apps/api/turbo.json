@@ -1,0 +1,22 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": [
+    "//"
+  ],
+  "tasks": {
+    "build": {
+      "env": [
+        "JWT_SECRET",
+        "NODE_ENV",
+        "REDIS_HOST",
+        "REDIS_PORT",
+        "AWS_KEY",
+        "AWS_SECRET",
+        "OPENROUTER_KEY",
+        "SECRET_KEY",
+        "ATOMA_KEY",
+        "OPENMIND_API_KEY"
+      ]
+    }
+  }
+}

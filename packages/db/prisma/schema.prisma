@@ -1,0 +1,273 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
+  binaryTargets   = ["native", "debian-openssl-3.0.x", "linux-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  suiWallet String @unique
+
+  agents Agent[]
+
+  @@map("users")
+}
+
+model TelegramUser {
+  id        String   @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  telegramUsername  String?
+  telegramFirstName String
+  telegramLastName  String?
+  isBot             Boolean @default(false)
+
+  messages Message[]
+
+  @@map("telegram_users")
+}
+
+model DiscordUser {
+  id        String   @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  username    String
+  displayName String
+  isBot       Boolean @default(false)
+
+  messages Message[]
+
+  @@map("discord_users")
+}
+
+model Agent {
+  id            String   @id @default(uuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  credits       Int      @default(0)
+  creditsUsed   Int      @default(0)
+  name          String
+  description   String
+  personality   String
+  instruction   String
+  knowledge     String?
+  botToken      String?  @unique
+  botId         String?  @unique
+  botFirstName  String?
+  botUsername   String?  @unique
+  botAvatar     String?
+  tgGroupLink   String?
+  tgGroupTitle  String?
+  tgGroupId     String?
+  apiSecret     String?  @unique
+  contextCount  Int      @default(10)
+  cloudProvider String? // Lora Cloud or Atoma Cloud
+
+  twitterRefreshToken String?
+  twitterAccessToken  String?
+  twitterUsername     String?
+  twitterUserId       String?
+
+  discordToken       String? @unique
+  discordId          String? @unique
+  discordUsername    String?
+  discordDisplayName String?
+  discordAvatar      String?
+  discordGroupLink   String?
+
+  userId           String
+  user             User              @relation(fields: [userId], references: [id])
+  inferenceLogs    InferenceLog[]
+  twitterPosts     TwitterPost[]
+  agentAttachments AgentAttachment[]
+  agentPlugins     AgentPlugin[]
+  agentTools       AgentTool[]
+  agentToolLogs    AgentToolLog[]
+  Embedding        Embedding[]
+
+  @@map("agents")
+}
+
+model AgentAttachment {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  link        String
+  title       String
+  description String
+  content     String
+
+  agentId    String
+  agent      Agent       @relation(fields: [agentId], references: [id])
+  embeddings Embedding[]
+
+  @@map("agent_attachments")
+}
+
+model AgentTool {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name            String  @unique
+  description     String
+  expireInSeconds Int
+  enabled         Boolean @default(false)
+  url             String
+  method          String // GET, POST
+  headers         String? // JSON: { "x-api-key": "xxxxxx"}
+  parameters      String? // JSON: [name, type, description][]
+  requestBody     String? // JSON: { "name": "test", "type": "${type}" }
+  responsePath    String? // JSON: data.users.0.name
+
+  agents        Agent[]
+  agentToolLogs AgentToolLog[]
+
+  @@map("agent_tools")
+}
+
+model AgentToolLog {
+  id        BigInt   @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  toolCallId String  @unique
+  input      String  @db.Text
+  output     String? @db.Text
+  error      String?
+
+  agentId   String?
+  agent     Agent?    @relation(fields: [agentId], references: [id])
+  toolId    Int
+  agentTool AgentTool @relation(fields: [toolId], references: [id])
+
+  @@map("agent_tool_logs")
+}
+
+model AgentPlugin {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  name        String  @unique
+  description String?
+  hook        Int // -1: pre, 0: normal, 1: post
+  enabled     Boolean @default(false)
+
+  agentId String
+  agent   Agent  @relation(fields: [agentId], references: [id])
+
+  @@map("agent_plugins")
+}
+
+model Message {
+  id        String   @id
+  createdAt DateTime @default(now())
+
+  groupId   String
+  threadId  String?
+  messageId String? // origin message id, in telegram / discord
+  text      String
+  imageUrl  String?
+
+  telegramUserId String?
+  telegramUser   TelegramUser? @relation(fields: [telegramUserId], references: [id])
+  discordUserId  String?
+  discordUser    DiscordUser?  @relation(fields: [discordUserId], references: [id])
+  quoteMessageId String?
+  quoteMessage   Message?      @relation("QuotedMessages", fields: [quoteMessageId], references: [id])
+  quotedBy       Message[]     @relation("QuotedMessages")
+
+  @@index([groupId, threadId])
+  @@map("messages")
+}
+
+model MessageSummary {
+  groupId   String   @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  summary       String
+  knowledge     String
+  profile       String
+  lastMessageId String
+
+  @@map("message_summaries")
+}
+
+model InferenceLog {
+  id        BigInt   @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  system       String   @db.Text
+  input        String   @db.Text
+  output       String   @db.Text
+  stopReason   String
+  inputTokens  Int      @default(0)
+  outputTokens Int      @default(0)
+  modelId      String   @default("")
+  scenario     String   @default("")
+  isFailed     Boolean?
+
+  agentId String?
+  agent   Agent?  @relation(fields: [agentId], references: [id])
+
+  @@map("inference_logs")
+}
+
+model TwitterPost {
+  id        String   @id
+  createdAt DateTime @default(now())
+
+  text         String
+  tweetId      String? @unique
+  quoteTweetId String?
+  replyTweetId String?
+  status       Int     @default(1)
+  inChat       Boolean @default(false)
+
+  agentId String?
+  agent   Agent?  @relation(fields: [agentId], references: [id])
+
+  @@unique([agentId, replyTweetId])
+  @@unique([agentId, quoteTweetId])
+  @@map("twitter_posts")
+}
+
+model TwitterUser {
+  id        String   @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name            String?
+  username        String?
+  location        String?
+  description     String?
+  profileImageUrl String?
+
+  @@map("twitter_users")
+}
+
+model Embedding {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  content   String
+  embedding Unsupported("vector(1536)")
+
+  agentId           String
+  agent             Agent           @relation(fields: [agentId], references: [id])
+  agentAttachmentId Int
+  agentAttachment   AgentAttachment @relation(fields: [agentAttachmentId], references: [id])
+
+  @@map("embeddings")
+}
