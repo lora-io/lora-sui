@@ -15,7 +15,8 @@
         "OPENROUTER_KEY",
         "SECRET_KEY",
         "ATOMA_KEY",
-        "OPENMIND_API_KEY"
+        "OPENMIND_API_KEY",
+        "INSIDEX_KEY"
       ]
     }
   }
