@@ -1,4 +1,4 @@
-# Lora Agent
+# Lora Agent [![CI](https://github.com/lora-io/lora-sui/actions/workflows/ci.yml/badge.svg)](https://github.com/lora-io/lora-sui/actions/workflows/ci.yml)
 
 An innovative modular AI agent platform on SUI that makes AI creation effortless.
 
